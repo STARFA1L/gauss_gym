@@ -157,6 +157,77 @@ def t1_feet_symmetry(env, feet_value):
 def t1_hip_height_symmetry(env, hip_heights):
   hip_map = {'Left': 'Right', 'Right': 'Left'}
   hip_val_sym = torch.zeros_like(hip_heights)
+  # print("hip names are:", env.hip_names)
+  # print("hip_heights shape:", hip_heights.shape)
+  for hip_name in env.hip_names:
+    side = hip_name.split('_')[0]
+    new_name = hip_name.replace(side, hip_map[side])
+    # print(f'Mapping {hip_name} (idx {env.hip_names.index(hip_name)}) '
+    #       f'to {new_name} (idx {env.hip_names.index(new_name)}).')
+    hip_val_sym[..., env.hip_names.index(hip_name)] = hip_heights[
+      ..., env.hip_names.index(new_name)
+    ]
+  return hip_val_sym
+
+
+#11/18 added:
+def g1_joint_symmetry(env, joint_val, use_multipliers=True):
+  joint_map = {'left': 'right', 'right': 'left'}
+  multipliers = {
+    # 'head_joint': 1.0,
+    # 'shoulder_pitch_joint': 1.0,
+    # 'shoulder_roll_joint': -1.0,
+    # 'elbow_pitch': 1.0,
+    # 'wrist_pitch': 1.0,
+    # 'wrist_yaw': -1.0,
+    # 'hand_roll': -1.0,
+    # 'waist': -1.0,
+    'hip_pitch_joint': 1.0,
+    'hip_roll_joint': -1.0,
+    'hip_yaw_joint': -1.0,
+    'knee_joint': 1.0,
+    'ankle_pitch_joint': 1.0,
+    'ankle_roll_joint': -1.0,
+  }
+  joint_val_sym = torch.zeros_like(joint_val)
+  # print("dof_name in g1_joint_symmetry:")
+  # for dof_name in env.dof_names:
+  #   print(dof_name)
+  for dof_name in env.dof_names:
+    if dof_name.startswith('left') or dof_name.startswith('right'):
+      name_parts = dof_name.split('_')
+      new_name = dof_name.replace(name_parts[0], joint_map[name_parts[0]])
+      multiplier = multipliers['_'.join(name_parts[1:])] if use_multipliers else 1.0
+    else:
+      new_name = dof_name
+      multiplier = multipliers[dof_name] if use_multipliers else 1.0
+    joint_val_sym[..., env.dof_names.index(dof_name)] = (
+      multiplier * joint_val[..., env.dof_names.index(new_name)]
+    )
+  return joint_val_sym
+
+def g1_feet_symmetry(env, feet_value):
+  foot_map = {'left': 'right', 'right': 'left'}
+  feet_value_sym = torch.zeros_like(feet_value)
+  for foot_name in env.feet_names:
+    side = foot_name.split('_')[0]
+    new_name = foot_name.replace(side, foot_map[side])
+    # print(f'Mapping {foot_name} (idx {env.feet_names.index(foot_name)}) '
+    #       f'to {new_name} (idx {env.feet_names.index(new_name)}).')
+    feet_value_sym[..., env.feet_names.index(foot_name)] = feet_value[
+      ..., env.feet_names.index(new_name)
+    ]
+  return feet_value_sym
+
+
+def g1_hip_height_symmetry(env, hip_heights):
+  hip_map = {'left': 'right', 'right': 'left'}
+  hip_val_sym = torch.zeros_like(hip_heights)
+  # print("hip names are:")
+  # for hip_name in env.hip_names:
+  #   print(hip_name)
+  # print("hip_heights shape:", hip_heights.shape)
+  # print("hip heights:", hip_heights)
   for hip_name in env.hip_names:
     side = hip_name.split('_')[0]
     new_name = hip_name.replace(side, hip_map[side])
@@ -383,6 +454,72 @@ T1_FEET_CONTACT = SymmetryModifier(
 T1_HIP_HEIGHTS = SymmetryModifier(
   observation=observation_groups.HIP_HEIGHTS,
   symmetry_fn=t1_hip_height_symmetry,
+)
+
+#11/18 added:
+G1_DOF_POS = SymmetryModifier(
+  observation=observation_groups.DOF_POS,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=True),
+)
+
+G1_DOF_VEL = SymmetryModifier(
+  observation=observation_groups.DOF_VEL,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=True),
+)
+
+G1_ACTIONS = SymmetryModifier(
+  observation=observation_groups.ACTIONS,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=True),
+)
+
+G1_STIFFNESS = SymmetryModifier(
+  observation=observation_groups.STIFFNESS,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=False),
+)
+
+G1_DAMPING = SymmetryModifier(
+  observation=observation_groups.DAMPING,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=False),
+)
+
+G1_DOF_FRICTION = SymmetryModifier(
+  observation=observation_groups.DOF_FRICTION,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=False),
+)
+
+G1_DOF_ARMATURE = SymmetryModifier(
+  observation=observation_groups.DOF_ARMATURE,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=False),
+)
+
+G1_MOTOR_STRENGTH = SymmetryModifier(
+  observation=observation_groups.MOTOR_STRENGTH,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=False),
+)
+
+G1_MOTOR_ERROR = SymmetryModifier(
+  observation=observation_groups.MOTOR_ERROR,
+  symmetry_fn=functools.partial(g1_joint_symmetry, use_multipliers=True),
+)
+
+G1_FEET_AIR_TIME = SymmetryModifier(
+  observation=observation_groups.FEET_AIR_TIME,
+  symmetry_fn=g1_feet_symmetry,
+)
+
+G1_FEET_CONTACT_TIME = SymmetryModifier(
+  observation=observation_groups.FEET_CONTACT_TIME,
+  symmetry_fn=g1_feet_symmetry,
+)
+
+G1_FEET_CONTACT = SymmetryModifier(
+  observation=observation_groups.FEET_CONTACT,
+  symmetry_fn=g1_feet_symmetry,
+)
+
+G1_HIP_HEIGHTS = SymmetryModifier(
+  observation=observation_groups.HIP_HEIGHTS,
+  symmetry_fn=g1_hip_height_symmetry,
 )
 
 GAIT_PROGRESS = SymmetryModifier(

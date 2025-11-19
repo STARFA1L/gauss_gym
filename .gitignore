@@ -54,6 +54,13 @@ Thumbs.db
 logs*
 runs
 
+# compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+*.tar
+
 # other
 *.egg-info
 __pycache__

@@ -1801,6 +1801,7 @@ class LeggedRobot(base_task.BaseTask):
   def _reward_hip_height(self, height_target):
     # Penalize hip height away from target
     hip_heights = self.sensors['hip_height_raycaster'].get_data()
+    print("legged_robot:hip_heights shape:", hip_heights.shape)
     hip_height_error = hip_heights - height_target
     hip_height_error = torch.square(hip_height_error).sum(dim=-1)
     return hip_height_error

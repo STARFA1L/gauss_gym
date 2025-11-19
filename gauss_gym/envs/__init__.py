@@ -3,6 +3,7 @@ import pathlib
 import gauss_gym
 from gauss_gym.envs.base.legged_robot import LeggedRobot
 from gauss_gym.envs.anymal_c.anymal import Anymal
+from gauss_gym.envs.g1 import g1
 from gauss_gym.envs.t1 import t1  # noqa: F401
 from gauss_gym.utils import config
 
@@ -42,6 +43,18 @@ task_registry.register(
   t1.T1,
   config.from_yaml(
     pathlib.Path(gauss_gym.GAUSS_GYM_ENVS_DIR) / 't1' / 'config_vision.yaml'
+  ),
+)
+task_registry.register(
+  'g1',
+  g1.G1,
+  config.from_yaml(pathlib.Path(gauss_gym.GAUSS_GYM_ENVS_DIR) / 'g1' / 'config.yaml'),
+)
+task_registry.register(
+  'g1_vision',
+  g1.G1,
+  config.from_yaml(
+    pathlib.Path(gauss_gym.GAUSS_GYM_ENVS_DIR) / 'g1' / 'config_vision.yaml'
   ),
 )
 task_registry.register(
